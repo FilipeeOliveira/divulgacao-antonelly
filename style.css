@@ -1,0 +1,77 @@
+/* Estilo da overlay do modal */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+}
+
+/* Estilo do iframe */
+.pdf-iframe {
+  width: 100%;
+  height: calc(100% - 4rem);
+  border: none;
+}
+
+/* Scrollbar customizado */
+body::-webkit-scrollbar {
+  width: 8px;
+}
+body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Classe para títulos das seções */
+.section-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #4B5563;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #5cab1d;
+}
+
+/* Link do item */
+.item-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: rgba(92, 171, 29, 0.1);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+}
+.item-link:hover {
+  background-color: rgba(92, 171, 29, 0.2);
+  transform: scale(1.05);
+}
+
+/* Ícone */
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #5cab1d;
+}
+
+/* Botão de fechar modal */
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: #f87171;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  transition: background-color 0.3s ease;
+}
+.close-button:hover {
+  background-color: #ef4444;
+}
