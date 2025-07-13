@@ -1,35 +1,89 @@
-  const express = require('express');
+const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 const PORT = 3000;
 
-// Permitir CORS para frontend local
 app.use(cors());
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'public/src/uploads')));
+app.use(express.json());
 
-// Configuração do Multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  }
+// Configuração do multer
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, 'public/src/uploads'));
+    },
+    filename: (req, file, cb) => {
+      const uniqueName = `${Date.now()}-${file.originalname}`;
+      cb(null, uniqueName);
+    }
+  })
 });
-const upload = multer({ storage });
 
-// Rota de upload
+// Upload e salvar metadados
 app.post('/upload', upload.single('pdf'), (req, res) => {
   const file = req.file;
-  if (!file) return res.status(400).send('Nenhum arquivo enviado.');
-  return res.json({ fileUrl: `/uploads/${file.filename}` });
+  const { name, category } = req.body;
+
+  if (!file || !name || !category) {
+    return res.status(400).send('Campos obrigatórios faltando.');
+  }
+
+  const fileUrl = `/uploads/${file.filename}`;
+  const newDoc = { name, category, fileUrl };
+
+  const dataPath = path.join(__dirname, 'data.json');
+  const existing = fs.existsSync(dataPath)
+    ? JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
+    : [];
+
+  existing.push(newDoc);
+  fs.writeFileSync(dataPath, JSON.stringify(existing, null, 2));
+
+  return res.json(newDoc);
+});
+
+// Buscar documentos
+app.get('/documents', (req, res) => {
+  const dataPath = path.join(__dirname, 'data.json');
+  if (!fs.existsSync(dataPath)) return res.json([]);
+  const documents = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+  res.json(documents);
 });
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
+
+app.delete('/documents', (req, res) => {
+  const { fileUrl } = req.body;
+
+  if (!fileUrl) {
+    return res.status(400).json({ message: 'Arquivo não informado' });
+  }
+
+  const dataPath = path.join(__dirname, 'data.json');
+  const documents = fs.existsSync(dataPath)
+    ? JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
+    : [];
+
+  const updatedDocs = documents.filter(doc => doc.fileUrl !== fileUrl);
+  const removedDoc = documents.find(doc => doc.fileUrl === fileUrl);
+
+  // Remove o arquivo do disco
+  if (removedDoc) {
+    const filePath = path.join(__dirname, 'public/src', removedDoc.fileUrl);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+
+  fs.writeFileSync(dataPath, JSON.stringify(updatedDocs, null, 2));
+
+  res.json({ message: 'Documento removido com sucesso' });
 });

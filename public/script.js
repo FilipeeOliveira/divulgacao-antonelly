@@ -9,7 +9,22 @@ let documentCounters = {
 document.addEventListener("DOMContentLoaded", () => {
   initializePdfViewer();
   initializeUploadModal();
+  loadDocuments();
 });
+
+
+async function loadDocuments() {
+  try {
+    const response = await fetch('http://localhost:3000/documents');
+    const documents = await response.json();
+
+    documents.forEach(doc => {
+      addDocumentToList(doc.name, doc.category, doc.fileUrl);
+    });
+  } catch (error) {
+    console.error('Erro ao carregar documentos:', error);
+  }
+}
 
 // ===== FUNCIONALIDADE ORIGINAL DO VISUALIZADOR DE PDF =====
 function initializePdfViewer() {
@@ -133,9 +148,9 @@ function processFile(file) {
 }
 
 // Envio do formulário
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
   event.preventDefault();
-  
+
   const documentName = document.getElementById('documentName').value;
   const documentCategory = document.getElementById('documentCategory').value;
   const file = uploadedFiles.temp;
@@ -145,18 +160,27 @@ function handleFormSubmit(event) {
     return;
   }
 
-  // Criar URL para o arquivo
-  const fileUrl = URL.createObjectURL(file);
-  
-  // Adicionar documento à lista
-  addDocumentToList(documentName, documentCategory, fileUrl);
-  
-  // Fechar modal
-  closeUploadModal();
-  
-  // Limpar arquivo temporário
-  delete uploadedFiles.temp;
+  const formData = new FormData();
+  formData.append('pdf', file);
+  formData.append('name', documentName);
+  formData.append('category', documentCategory);
+
+  try {
+    const response = await fetch('http://localhost:3000/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+    addDocumentToList(data.name, data.category, data.fileUrl);
+    closeUploadModal();
+    delete uploadedFiles.temp;
+  } catch (error) {
+    console.error('Erro ao enviar arquivo:', error);
+    alert('Erro ao enviar o documento.');
+  }
 }
+
 
 // Adicionar documento à lista
 function addDocumentToList(name, category, fileUrl) {
@@ -198,15 +222,29 @@ function addDocumentToList(name, category, fileUrl) {
 }
 
 // Deletar documento
-function deleteDocument(button) {
-  if (confirm('Tem certeza que deseja remover este documento?')) {
-    const li = button.closest('li');
-    li.remove();
-    
-    // Reorganizar numeração
-    reorganizeDocuments();
+async function deleteDocument(button) {
+  const li = button.closest('li');
+  const span = li.querySelector('span');
+  const text = span.textContent;
+  const fileUrl = li.querySelector('.pdf-link').dataset.url;
+
+  if (confirm(`Tem certeza que deseja remover o documento "${text}"?`)) {
+    try {
+      await fetch('http://localhost:3000/documents', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUrl })
+      });
+
+      li.remove();
+      reorganizeDocuments();
+    } catch (error) {
+      console.error('Erro ao remover documento:', error);
+      alert('Erro ao deletar documento.');
+    }
   }
 }
+
 
 // Reorganizar numeração dos documentos
 function reorganizeDocuments() {
