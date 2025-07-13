@@ -75,3 +75,59 @@ body::-webkit-scrollbar-thumb:hover {
 .close-button:hover {
   background-color: #ef4444;
 }
+
+/* ===== NOVOS ESTILOS PARA UPLOAD ===== */
+
+/* Botão de upload */
+.upload-button {
+  background-color: #5cab1d;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.upload-button:hover {
+  background-color: #4a9419;
+  transform: translateY(-1px);
+}
+
+/* Estilo do botão de delete */
+.delete-button {
+  background-color: #ef4444;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+.delete-button:hover {
+  background-color: #dc2626;
+}
+
+/* Estilo para input de arquivo oculto */
+.file-input {
+  display: none;
+}
+
+/* Estilo para área de drop de arquivo */
+.drop-area {
+  border: 2px dashed #5cab1d;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  background-color: rgba(92, 171, 29, 0.05);
+  transition: all 0.3s ease;
+}
+.drop-area.drag-over {
+  border-color: #4a9419;
+  background-color: rgba(92, 171, 29, 0.1);
+}

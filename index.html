@@ -32,69 +32,110 @@
     <h1 class="text-5xl font-extrabold text-center text-gray-800 mb-4 tracking-tight">Antonelly</h1>
     <h2 class="text-2xl font-semibold text-center text-gray-600 mb-10">Bem vindo</h2>
 
+    <!-- Botão de Upload -->
+    <div class="mb-8 text-center">
+      <button onclick="openUploadModal()" class="upload-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        Adicionar Documento
+      </button>
+    </div>
+
     <!-- Touch Comp -->
     <section class="mb-10">
       <h3 class="section-title">Manuais Touch Comp</h3>
-      <ul class="space-y-4">
-        <li>
-          <a href="./src/procedimentos/PC UPNETIX x ANTONELLY CONSTRUÇÕES E SERVIÇOS - BANDA LARGA 1 GIGA - sede e torres - assinado.pdf" target="_blank" class="pdf-link item-link">
-            <span>1 - Procedimento financeiro</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </a>
-        </li>
-        <li>
-          <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" target="_blank" class="pdf-link item-link">
-            <span>2 - Procedimento de compra</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </a>
-        </li>
-        <li>
-          <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" target="_blank" class="pdf-link item-link">
-            <span>3 - Procedimento jurídico</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </a>
-        </li>
+      <ul id="touchCompList" class="space-y-4">
       </ul>
     </section>
 
     <!-- Procedimentos Internos -->
     <section class="mb-10">
       <h3 class="section-title">Procedimentos Internos</h3>
-      <ul class="space-y-4">
-        <li>
-          <a href="https://www.africau.edu/images/default/sample.pdf" target="_blank" class="pdf-link item-link">
-            <span>1 - Procedimento de fardamento</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </a>
-        </li>
-        <li>
-          <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" target="_blank" class="pdf-link item-link">
-            <span>2 - Procedimento de entrada de equipamento</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </a>
-        </li>
+      <ul id="procedimentosInternosList" class="space-y-4">
       </ul>
     </section>
 
-  <!-- Modal -->
-  <div id="pdfModal" class="modal-overlay fixed inset-0 flex items-center justify-center hidden">
-    <div class="bg-white rounded-lg shadow-2xl p-4 w-11/12 h-5/6 max-w-4xl relative">
-      <button id="closeModal" class="close-button">&times; Fechar</button>
-      <iframe id="pdfIframe" class="pdf-iframe mt-12" src="" frameborder="0"></iframe>
-    </div>
-  </div>
+    <!-- Modal de Upload -->
+    <div id="uploadModal" class="modal-overlay fixed inset-0 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-2xl p-6 w-11/12 max-w-md relative">
+        <button id="closeUploadModal" class="close-button">&times; Fechar</button>
+        <h3 class="text-xl font-bold mb-4 text-gray-800">Adicionar Documento</h3>
+        
+        <!-- Área de upload -->
+        <div id="dropArea" class="drop-area mb-4">
+          <p class="text-gray-600 mb-2">Arraste e solte um arquivo PDF aqui ou</p>
+          <button onclick="document.getElementById('fileInput').click()" class="upload-button">
+            Selecionar Arquivo
+          </button>
+          <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+        </div>
 
-  <!-- JS -->
-  <script src="script.js"></script>
+        <!-- Informações do arquivo -->
+        <div id="fileInfo" class="hidden mb-4">
+          <p class="text-sm text-gray-600">Arquivo selecionado:</p>
+          <p id="fileName" class="font-semibold text-gray-800"></p>
+        </div>
+
+        <!-- Formulário -->
+        <form id="uploadForm" class="hidden">
+          <div class="mb-4">
+            <label for="documentName" class="block text-sm font-medium text-gray-700 mb-2">
+              Nome do Documento:
+            </label>
+            <input 
+              type="text" 
+              id="documentName" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-antonellyGreen"
+              placeholder="Digite o nome do documento"
+              required
+            />
+          </div>
+
+          <div class="mb-4">
+            <label for="documentCategory" class="block text-sm font-medium text-gray-700 mb-2">
+              Categoria:
+            </label>
+            <select 
+              id="documentCategory" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-antonellyGreen"
+              required
+            >
+              <option value="">Selecione uma categoria</option>
+              <option value="touchComp">Manuais Touch Comp</option>
+              <option value="procedimentosInternos">Procedimentos Internos</option>
+            </select>
+          </div>
+
+          <div class="flex justify-end space-x-2">
+            <button 
+              type="button" 
+              onclick="closeUploadModal()" 
+              class="px-4 py-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="px-4 py-2 bg-antonellyGreen text-white rounded-md hover:bg-green-600"
+            >
+              Adicionar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de Visualização PDF -->
+    <div id="pdfModal" class="modal-overlay fixed inset-0 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-2xl p-4 w-11/12 h-5/6 max-w-4xl relative">
+        <button id="closeModal" class="close-button">&times; Fechar</button>
+        <iframe id="pdfIframe" class="pdf-iframe mt-12" src="" frameborder="0"></iframe>
+      </div>
+    </div>
+
+    <!-- JS -->
+    <script src="script.js"></script>
+  </div>
 </body>
 </html>
