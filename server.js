@@ -87,3 +87,27 @@ app.delete('/documents', (req, res) => {
 
   res.json({ message: 'Documento removido com sucesso' });
 });
+
+// Atualizar nome do documento
+app.put('/documents', (req, res) => {
+  const { fileUrl, newName } = req.body;
+
+  if (!fileUrl || !newName) {
+    return res.status(400).json({ message: 'Parâmetros faltando' });
+  }
+
+  const dataPath = path.join(__dirname, 'data.json');
+  const documents = fs.existsSync(dataPath)
+    ? JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
+    : [];
+
+  const docIndex = documents.findIndex(doc => doc.fileUrl === fileUrl);
+  if (docIndex === -1) {
+    return res.status(404).json({ message: 'Documento não encontrado' });
+  }
+
+  documents[docIndex].name = newName;
+  fs.writeFileSync(dataPath, JSON.stringify(documents, null, 2));
+
+  res.json(documents[docIndex]);
+});

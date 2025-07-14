@@ -131,3 +131,19 @@ body::-webkit-scrollbar-thumb:hover {
   border-color: #4a9419;
   background-color: rgba(92, 171, 29, 0.1);
 }
+
+/* Estilo do botão de edição */
+.edit-button {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+.edit-button:hover {
+  background-color: #2563eb;
+}
