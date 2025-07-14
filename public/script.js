@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadDocuments() {
   try {
-    const response = await fetch('http://localhost:3000/documents');
+    const response = await fetch('http://localhost:5200/documents');
     const documents = await response.json();
 
     documents.forEach(doc => {
@@ -163,7 +163,7 @@ async function handleFormSubmit(event) {
   formData.append('category', documentCategory);
 
   try {
-    const response = await fetch('http://localhost:3000/upload', {
+    const response = await fetch('http://localhost:5200/upload', {
       method: 'POST',
       body: formData
     });
@@ -228,7 +228,7 @@ async function deleteDocument(button, event) {
 
   if (confirm(`Tem certeza que deseja remover o documento "${text}"?`)) {
     try {
-      await fetch('http://localhost:3000/documents', {
+      await fetch('http://localhost:5200/documents', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileUrl })
