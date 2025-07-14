@@ -9,10 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
   loadDocuments();
 });
 
-
+// Carregar documentos existentes
 async function loadDocuments() {
   try {
-    // Inicializar contadores
     documentCounters = {
       touchComp: 0,
       procedimentosInternos: 0
@@ -30,29 +29,20 @@ async function loadDocuments() {
       }
     });
 
-    // Adicionar documentos à lista
+    // Adicionar à lista
     documents.forEach(doc => {
-      addDocumentToList(doc.name, doc.category, doc.fileUrl, false); // false para não incrementar o contador novamente
+      addDocumentToList(doc.name, doc.category, doc.fileUrl, false);
     });
   } catch (error) {
     console.error('Erro ao carregar documentos:', error);
   }
 }
 
-// ===== FUNCIONALIDADE ORIGINAL DO VISUALIZADOR DE PDF =====
+// Visualizador de PDF
 function initializePdfViewer() {
-  const pdfLinks = document.querySelectorAll(".pdf-link");
+  const closeModalButton = document.getElementById("closeModal");
   const pdfModal = document.getElementById("pdfModal");
   const pdfIframe = document.getElementById("pdfIframe");
-  const closeModalButton = document.getElementById("closeModal");
-
-  pdfLinks.forEach(link => {
-    link.addEventListener("click", event => {
-      event.preventDefault();
-      pdfIframe.src = link.href;
-      pdfModal.classList.remove("hidden");
-    });
-  });
 
   closeModalButton.addEventListener("click", () => {
     pdfModal.classList.add("hidden");
@@ -64,41 +54,29 @@ function initializePdfViewer() {
       pdfModal.classList.add("hidden");
       pdfIframe.src = "";
     }
-  })
-    initializeEditModal();
+  });
+
+  initializeEditModal();
 }
 
-// ===== NOVAS FUNCIONALIDADES DE UPLOAD =====
-
-// Funcionalidade do modal de upload
+// Modal de Upload
 function initializeUploadModal() {
   const fileInput = document.getElementById('fileInput');
   const dropArea = document.getElementById('dropArea');
   const uploadForm = document.getElementById('uploadForm');
 
-  // Eventos do input de arquivo
   fileInput.addEventListener('change', handleFileSelect);
-
-  // Eventos de drag and drop
   dropArea.addEventListener('dragover', handleDragOver);
   dropArea.addEventListener('dragleave', handleDragLeave);
   dropArea.addEventListener('drop', handleDrop);
-
-  // Envio do formulário
   uploadForm.addEventListener('submit', handleFormSubmit);
 
-  // Event listener para fechar modal de upload
   document.getElementById('closeUploadModal').addEventListener('click', closeUploadModal);
-
-  // Fechar modal clicando fora
   document.getElementById('uploadModal').addEventListener('click', function(event) {
-    if (event.target === this) {
-      closeUploadModal();
-    }
+    if (event.target === this) closeUploadModal();
   });
 }
 
-// Funções do modal de upload
 function openUploadModal() {
   document.getElementById('uploadModal').classList.remove('hidden');
   resetUploadForm();
@@ -117,12 +95,9 @@ function resetUploadForm() {
   document.getElementById('documentCategory').value = '';
 }
 
-// Manipulação de arquivos
 function handleFileSelect(event) {
   const file = event.target.files[0];
-  if (file) {
-    processFile(file);
-  }
+  if (file) processFile(file);
 }
 
 function handleDragOver(event) {
@@ -152,16 +127,13 @@ function processFile(file) {
     return;
   }
 
-  // Mostrar informações do arquivo
   document.getElementById('fileName').textContent = file.name;
   document.getElementById('fileInfo').classList.remove('hidden');
   document.getElementById('uploadForm').classList.remove('hidden');
 
-  // Armazenar arquivo temporariamente
   uploadedFiles.temp = file;
 }
 
-// Envio do formulário
 async function handleFormSubmit(event) {
   event.preventDefault();
 
@@ -186,7 +158,7 @@ async function handleFormSubmit(event) {
     });
 
     const data = await response.json();
-    addDocumentToList(data.name, data.category, data.fileUrl, true); // true para incrementar o contador
+    addDocumentToList(data.name, data.category, data.fileUrl, true);
     closeUploadModal();
     delete uploadedFiles.temp;
   } catch (error) {
@@ -195,22 +167,17 @@ async function handleFormSubmit(event) {
   }
 }
 
-
-// Adicionar documento à lista
+// ✅ Única versão correta da função
 function addDocumentToList(name, category, fileUrl, incrementCounter = true) {
   const listId = category === 'touchComp' ? 'touchCompList' : 'procedimentosInternosList';
   const list = document.getElementById(listId);
-  
-  // Incrementar contador apenas se solicitado
+
   if (incrementCounter) {
     documentCounters[category]++;
   }
-  
-  // Obter o número correto para exibição
-  const itemsInCategory = list.querySelectorAll('li').length;
-  const number = incrementCounter ? documentCounters[category] : itemsInCategory + 1;
-  
-  // Criar elemento da lista
+
+  const number = list.querySelectorAll('li').length + 1;
+
   const li = document.createElement('li');
   li.innerHTML = `
     <div class="item-link pdf-link" data-url="${fileUrl}">
@@ -224,24 +191,22 @@ function addDocumentToList(name, category, fileUrl, incrementCounter = true) {
       </div>
     </div>
   `;
-  
+
   list.appendChild(li);
-  
-  // Adicionar event listener para o novo link
+
   const newLink = li.querySelector('.pdf-link');
   newLink.addEventListener('click', function(event) {
     if (event.target.tagName === 'BUTTON') return;
     event.preventDefault();
     const pdfModal = document.getElementById("pdfModal");
     const pdfIframe = document.getElementById("pdfIframe");
-    
+
     const url = this.dataset.url || this.href;
     pdfIframe.src = url;
     pdfModal.classList.remove("hidden");
   });
 }
 
-// Deletar documento
 async function deleteDocument(button, event) {
   event.stopPropagation();
   const li = button.closest('li');
@@ -266,46 +231,27 @@ async function deleteDocument(button, event) {
   }
 }
 
-function addDocumentToList(name, category, fileUrl) {
-  const listId = category === 'touchComp' ? 'touchCompList' : 'procedimentosInternosList';
-  const list = document.getElementById(listId);
-  
-  // Incrementar contador
-  documentCounters[category]++;
-  const number = documentCounters[category];
-  
-  // Criar elemento da lista
-  const li = document.createElement('li');
-  li.innerHTML = `
-    <div class="item-link pdf-link" data-url="${fileUrl}">
-      <span>${number} - ${name}</span>
-      <div class="flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <button class="edit-button" onclick="openEditModal('${name}', '${fileUrl}', event)">✎</button>
-        <button class="delete-button" onclick="deleteDocument(this, event)">×</button>
-      </div>
-    </div>
-  `;
-  
-  list.appendChild(li);
-  
-  // Adicionar event listener para o novo link
-  const newLink = li.querySelector('.pdf-link');
-  newLink.addEventListener('click', function(event) {
-    if (event.target.tagName === 'BUTTON') return;
-    event.preventDefault();
-    const pdfModal = document.getElementById("pdfModal");
-    const pdfIframe = document.getElementById("pdfIframe");
+function reorganizeDocuments() {
+  const categories = ['touchCompList', 'procedimentosInternosList'];
+  const categoryKeys = ['touchComp', 'procedimentosInternos'];
+
+  categories.forEach((listId, index) => {
+    const list = document.getElementById(listId);
+    const items = list.querySelectorAll('li');
     
-    const url = this.dataset.url || this.href;
-    pdfIframe.src = url;
-    pdfModal.classList.remove("hidden");
+    documentCounters[categoryKeys[index]] = 0;
+
+    items.forEach((item, itemIndex) => {
+      documentCounters[categoryKeys[index]]++;
+      const span = item.querySelector('span');
+      const text = span.textContent;
+      const nameWithoutNumber = text.replace(/^\d+\s*-\s*/, '');
+      span.textContent = `${itemIndex + 1} - ${nameWithoutNumber}`;
+    });
   });
 }
 
-// Funções para edição de documentos
+// Edição
 function openEditModal(name, fileUrl, event) {
   event.stopPropagation();
   document.getElementById('editDocumentName').value = name;
@@ -317,7 +263,6 @@ function closeEditModal() {
   document.getElementById('editModal').classList.add('hidden');
 }
 
-// Inicializar modal de edição
 function initializeEditModal() {
   const editForm = document.getElementById('editForm');
   const closeEditModalButton = document.getElementById('closeEditModal');
@@ -332,7 +277,6 @@ function initializeEditModal() {
   });
 }
 
-// Manipular envio do formulário de edição
 async function handleEditSubmit(event) {
   event.preventDefault();
 
@@ -352,12 +296,11 @@ async function handleEditSubmit(event) {
     });
 
     if (response.ok) {
-      // Atualizar a lista de documentos
       const lists = ['touchCompList', 'procedimentosInternosList'];
       lists.forEach(listId => {
         const list = document.getElementById(listId);
         const items = list.querySelectorAll('li');
-        
+
         items.forEach(item => {
           const link = item.querySelector('.pdf-link');
           if (link.dataset.url === fileUrl) {
@@ -377,27 +320,4 @@ async function handleEditSubmit(event) {
     console.error('Erro ao editar documento:', error);
     alert('Erro ao editar documento.');
   }
-}
-
-
-// Reorganizar numeração dos documentos
-function reorganizeDocuments() {
-  const categories = ['touchCompList', 'procedimentosInternosList'];
-  const categoryKeys = ['touchComp', 'procedimentosInternos'];
-  
-  categories.forEach((listId, index) => {
-    const list = document.getElementById(listId);
-    const items = list.querySelectorAll('li');
-    
-    // Resetar contador para esta categoria
-    documentCounters[categoryKeys[index]] = 0;
-    
-    items.forEach((item, itemIndex) => {
-      documentCounters[categoryKeys[index]]++;
-      const span = item.querySelector('span');
-      const text = span.textContent;
-      const nameWithoutNumber = text.replace(/^\d+\s*-\s*/, '');
-      span.textContent = `${itemIndex + 1} - ${nameWithoutNumber}`;
-    });
-  });
 }
