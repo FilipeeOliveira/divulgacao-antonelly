@@ -8,9 +8,6 @@ npm-debug.log
 logs/
 *.log
 
-# Uploads (PDFs salvos)
-public/src/uploads/
-
 # Sistema operacional
 .DS_Store
 Thumbs.db
