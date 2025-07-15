@@ -31,12 +31,38 @@ async function loadDocuments() {
 
     // Adicionar à lista
     documents.forEach(doc => {
-      addDocumentToList(doc.name, doc.category, doc.fileUrl, false);
+      addDocumentToList(doc.name, doc.category, doc.fileUrl, false, doc.createdAt, doc.updatedAt);
     });
   } catch (error) {
     console.error('Erro ao carregar documentos:', error);
   }
 }
+//Função para formatar a data
+function formatDate(dateString) {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (!isNaN(date)) {
+      return date.toLocaleString('pt-BR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    } else {
+      // Já está formatado (pt-BR), retorna direto
+      return dateString;
+    }
+  } catch {
+    return dateString;
+  }
+}
+
+
+console.log('data do script', formatDate());
 
 // Visualizador de PDF
 function initializePdfViewer() {
@@ -158,7 +184,7 @@ async function handleFormSubmit(event) {
     });
 
     const data = await response.json();
-    addDocumentToList(data.name, data.category, data.fileUrl, true);
+    addDocumentToList(data.name, data.category, data.fileUrl, true, data.createdAt, data.updatedAt);
     closeUploadModal();
     delete uploadedFiles.temp;
   } catch (error) {
@@ -167,8 +193,7 @@ async function handleFormSubmit(event) {
   }
 }
 
-// ✅ Única versão correta da função
-function addDocumentToList(name, category, fileUrl, incrementCounter = true) {
+function addDocumentToList(name, category, fileUrl, incrementCounter = true, createdAt, updatedAt) {
   const listId = category === 'touchComp' ? 'touchCompList' : 'procedimentosInternosList';
   const list = document.getElementById(listId);
 
@@ -181,7 +206,11 @@ function addDocumentToList(name, category, fileUrl, incrementCounter = true) {
   const li = document.createElement('li');
   li.innerHTML = `
     <div class="item-link pdf-link" data-url="${fileUrl}">
-      <span>${number} - ${name}</span>
+      <div class="flex flex-col">
+        <span>${number} - ${name}</span>
+        <small class="text-xs text-gray-500">Importado: ${formatDate(createdAt)}</small>
+        <small class="text-xs text-gray-500">Editado: ${formatDate(updatedAt)}</small>
+      </div>
       <div class="flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
@@ -191,7 +220,6 @@ function addDocumentToList(name, category, fileUrl, incrementCounter = true) {
       </div>
     </div>
   `;
-
   list.appendChild(li);
 
   const newLink = li.querySelector('.pdf-link');
