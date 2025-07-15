@@ -2,6 +2,25 @@
 let uploadedFiles = {};
 let documentCounters = {};
 
+let isAdmin = false;
+
+function loginAsAdmin() {
+  const password = document.getElementById('adminPassword').value;
+  if (password === 'antonelly123') {
+    isAdmin = true;
+    alert('Modo administrador ativado.');
+    showAdminControls();
+  } else {
+    alert('Senha incorreta.');
+  }
+}
+
+function showAdminControls() {
+  document.querySelector('.upload-button.upload-pdf-button').classList.remove('hidden');
+  document.querySelectorAll('.edit-button, .delete-button').forEach(btn => btn.classList.remove('hidden'));
+}
+
+
 // Inicialização
 document.addEventListener("DOMContentLoaded", () => {
   initializePdfViewer();
@@ -210,8 +229,10 @@ function addDocumentToList(name, category, fileUrl, incrementCounter = true, cre
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
         </svg>
-        <button class="edit-button" onclick="openEditModal('${name}', '${fileUrl}', event)">✎</button>
-        <button class="delete-button" onclick="deleteDocument(this, event)">×</button>
+        ${isAdmin ? `
+          <button class="edit-button" onclick="openEditModal('${name}', '${fileUrl}', event)">✎</button>
+          <button class="delete-button" onclick="deleteDocument(this, event)">×</button>
+        ` : ''}
       </div>
     </div>
   `;
