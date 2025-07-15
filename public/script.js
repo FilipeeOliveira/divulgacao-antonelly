@@ -49,7 +49,6 @@ function formatDate(dateString) {
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
         hour12: false
       });
     } else {
@@ -60,10 +59,6 @@ function formatDate(dateString) {
     return dateString;
   }
 }
-
-
-console.log('data do script', formatDate());
-
 // Visualizador de PDF
 function initializePdfViewer() {
   const closeModalButton = document.getElementById("closeModal");

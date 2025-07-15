@@ -36,18 +36,16 @@ app.post('/upload', upload.single('pdf'), (req, res) => {
 
   const fileUrl = `/uploads/${file.filename}`;
   const now = new Date().toLocaleString('pt-BR', {
+    timeZone: 'America/Manaus',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false,
 
   });
-  console.log('data server', now)
   const newDoc = { name, category, fileUrl, createdAt: now, updatedAt: now };
-
 
   const dataPath = path.join(__dirname, 'data.json');
   const existing = fs.existsSync(dataPath)
