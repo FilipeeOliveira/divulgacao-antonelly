@@ -5,19 +5,35 @@ let documentCounters = {};
 let isAdmin = false;
 
 function loginAsAdmin() {
-  const password = document.getElementById('adminPassword').value;
-  if (password === 'admin') {
+  const password = document.getElementById('adminPasswordInput').value;
+  if (password === 'admin01') {
     isAdmin = true;
-    alert('Modo administrador ativado.');
+    document.getElementById('adminLoginModal').classList.add('hidden');
     showAdminControls();
+    
+    // Mostrar mensagem de sucesso (opcional)
+    const adminButton = document.getElementById('adminButton');
+    adminButton.classList.add('bg-blue-500');
+    adminButton.textContent = '✓ ADM';
+    setTimeout(() => {
+      adminButton.classList.remove('bg-blue-500');
+      adminButton.textContent = 'ADM';
+    }, 2000);
   } else {
     alert('Senha incorreta.');
   }
 }
 
+// Modifique a função showAdminControls para ocultar o campo de senha antigo
 function showAdminControls() {
   document.querySelector('.upload-button.upload-pdf-button').classList.remove('hidden');
   document.querySelectorAll('.edit-button, .delete-button').forEach(btn => btn.classList.remove('hidden'));
+  
+  // Oculta o campo de senha antigo se existir
+  const oldPasswordField = document.getElementById('adminPassword');
+  if (oldPasswordField) {
+    oldPasswordField.parentElement.classList.add('hidden');
+  }
 }
 
 
@@ -26,7 +42,30 @@ document.addEventListener("DOMContentLoaded", () => {
   initializePdfViewer();
   initializeUploadModal();
   loadDocuments();
+  initializeAdminModal();
 });
+
+// Função para inicializar o modal de admin
+function initializeAdminModal() {
+  const adminButton = document.getElementById('adminButton');
+  const adminModal = document.getElementById('adminLoginModal');
+  const closeAdminModal = document.getElementById('closeAdminModal');
+  
+  adminButton.addEventListener('click', () => {
+    adminModal.classList.remove('hidden');
+  });
+  
+  closeAdminModal.addEventListener('click', () => {
+    adminModal.classList.add('hidden');
+  });
+  
+  adminModal.addEventListener('click', (event) => {
+    if (event.target === adminModal) {
+      adminModal.classList.add('hidden');
+    }
+  });
+}
+
 
 // Carregar documentos existentes
 async function loadDocuments() {

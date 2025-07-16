@@ -27,13 +27,7 @@
     <!-- Logo -->
     <div class="flex justify-center mb-6">
       <img src="./src/img/logo-antonelly.png" alt="Logo da Empresa" class="h-16 w-auto rounded-lg" />
-    </div>
-
-    <div class="text-center mb-6">
-      <input type="password" id="adminPassword" placeholder="Senha de administrador"
-        class="px-3 py-2 border rounded-md" />
-      <button onclick="loginAsAdmin()" class="upload-button ml-2">Entrar</button>
-    </div>
+    </div> 
 
     <h1 class="text-5xl font-extrabold text-center text-gray-800 mb-4 tracking-tight">Antonelly</h1>
     <h2 class="text-2xl font-semibold text-center text-gray-600 mb-10">Bem vindo</h2>
@@ -181,8 +175,43 @@
       </div>
     </div>
 
+    <!-- Botão ADM e Modal de Login -->
+    <button id="adminButton" class="fixed bottom-4 right-4 bg-antonellyGreen text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-green-600 transition-all">
+      ADM
+    </button>
+
+    <!-- Modal de Login ADM -->
+    <div id="adminLoginModal" class="modal-overlay fixed inset-0 flex items-center justify-center hidden">
+      <div class="bg-white rounded-lg shadow-2xl p-6 w-11/12 max-w-md relative">
+        <button id="closeAdminModal" class="close-button">&times; Fechar</button>
+        <h3 class="text-xl font-bold mb-4 text-gray-800">Acesso Administrativo</h3>
+        
+        <div class="mb-4">
+          <label for="adminPasswordInput" class="block text-sm font-medium text-gray-700 mb-2">
+            Senha:
+          </label>
+          <input 
+            type="password" 
+            id="adminPasswordInput" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-antonellyGreen"
+            placeholder="Digite a senha"
+            required
+          />
+        </div>
+
+        <div class="flex justify-end">
+          <button 
+            onclick="loginAsAdmin()" 
+            class="px-4 py-2 bg-antonellyGreen text-white rounded-md hover:bg-green-600"
+          >
+            Entrar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- JS -->
     <script src="script.js"></script>
-  </div>
+  </div> <!-- Fechamento da div container -->
 </body>
 </html>
