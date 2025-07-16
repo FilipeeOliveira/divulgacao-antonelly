@@ -24,16 +24,23 @@ function loginAsAdmin() {
   }
 }
 
-// Modifique a função showAdminControls para ocultar o campo de senha antigo
 function showAdminControls() {
-  document.querySelector('.upload-button.upload-pdf-button').classList.remove('hidden');
-  document.querySelectorAll('.edit-button, .delete-button').forEach(btn => btn.classList.remove('hidden'));
+  document.querySelector('.upload-button.upload-pdf-button').classList.remove('hidden');  
+  document.querySelectorAll('.edit-button, .delete-button').forEach(btn => {
+    btn.classList.remove('hidden');
+    btn.style.display = 'inline-block'; 
+  });
+
+  isAdmin = true;
   
-  // Oculta o campo de senha antigo se existir
-  const oldPasswordField = document.getElementById('adminPassword');
-  if (oldPasswordField) {
-    oldPasswordField.parentElement.classList.add('hidden');
-  }
+  refreshDocumentLists();
+}
+
+async function refreshDocumentLists() {
+  document.getElementById('touchCompList').innerHTML = '';
+  document.getElementById('procedimentosInternosList').innerHTML = '';
+  
+  await loadDocuments();
 }
 
 
@@ -87,7 +94,6 @@ async function loadDocuments() {
       }
     });
 
-    // Adicionar à lista
     documents.forEach(doc => {
       addDocumentToList(doc.name, doc.category, doc.fileUrl, false, doc.createdAt, doc.updatedAt);
     });
@@ -95,7 +101,7 @@ async function loadDocuments() {
     console.error('Erro ao carregar documentos:', error);
   }
 }
-//Função para formatar a data
+
 function formatDate(dateString) {
   if (!dateString) return '';
   try {
@@ -110,7 +116,6 @@ function formatDate(dateString) {
         hour12: false
       });
     } else {
-      // Já está formatado (pt-BR), retorna direto
       return dateString;
     }
   } catch {
@@ -269,8 +274,8 @@ function addDocumentToList(name, category, fileUrl, incrementCounter = true, cre
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.707 5.707V19a2 2 0 01-2 2z" />
         </svg>
         ${isAdmin ? `
-          <button class="edit-button" onclick="openEditModal('${name}', '${fileUrl}', event)">✎</button>
-          <button class="delete-button" onclick="deleteDocument(this, event)">×</button>
+          <button class="edit-button" onclick="openEditModal('${name}', '${fileUrl}', event)" style="display: ${isAdmin ? 'inline-block' : 'none'}">✎</button>
+          <button class="delete-button" onclick="deleteDocument(this, event)" style="display: ${isAdmin ? 'inline-block' : 'none'}">×</button>
         ` : ''}
       </div>
     </div>
