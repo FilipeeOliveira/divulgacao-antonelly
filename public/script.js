@@ -6,12 +6,12 @@ let isAdmin = false;
 
 function loginAsAdmin() {
   const password = document.getElementById('adminPasswordInput').value;
-  if (password === 'admin01') {
+  if (password === 'admin01') { 
     isAdmin = true;
     document.getElementById('adminLoginModal').classList.add('hidden');
     showAdminControls();
     
-    // Mostrar mensagem de sucesso (opcional)
+    // Mostrar mensagem de sucesso
     const adminButton = document.getElementById('adminButton');
     adminButton.classList.add('bg-blue-500');
     adminButton.textContent = '✓ ADM';
