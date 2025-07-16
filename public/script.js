@@ -1,6 +1,9 @@
 // Variáveis globais
 let uploadedFiles = {};
 let documentCounters = {};
+const API_BASE_URL = window.location.origin.includes('localhost')
+  ? 'http://localhost:5200'
+  : window.location.origin;
 
 let isAdmin = false;
 
@@ -82,7 +85,7 @@ async function loadDocuments() {
       procedimentosInternos: 0
     };
 
-    const response = await fetch('http://localhost:5200/documents');
+    const response = await fetch(`${API_BASE_URL}/documents`);
     const documents = await response.json();
 
     // Contar documentos por categoria
@@ -236,7 +239,7 @@ async function handleFormSubmit(event) {
   formData.append('category', documentCategory);
 
   try {
-    const response = await fetch('http://localhost:5200/upload', {
+    const response = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
       body: formData
     });
@@ -304,7 +307,7 @@ async function deleteDocument(button, event) {
 
   if (confirm(`Tem certeza que deseja remover o documento "${text}"?`)) {
     try {
-      await fetch('http://localhost:5200/documents', {
+      await fetch(`${API_BASE_URL}/documents`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileUrl })
@@ -377,7 +380,7 @@ async function handleEditSubmit(event) {
   }
 
   try {
-    const response = await fetch('http://localhost:5200/documents', {
+    const response = await fetch(`${API_BASE_URL}/documents`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fileUrl, newName })
