@@ -8,12 +8,11 @@ const os = require('os');
 const app = express();
 const PORT = 5200;
 
-// Log inicial do ambiente
-console.log('=== Ambiente de Execução ===');
-console.log('Sistema Operacional:', os.platform(), os.release());
-console.log('Node.js:', process.version);
-console.log('Diretório Atual:', __dirname);
-console.log('===========================');
+// Configuração de caminhos
+const BASE_DIR = __dirname;
+const PUBLIC_DIR = path.join(BASE_DIR, 'public');
+const UPLOADS_DIR = path.join(PUBLIC_DIR, 'src', 'uploads');
+const DATA_FILE = path.join(BASE_DIR, 'data.json');
 
 // Função para obter IPs locais
 function getLocalIPs() {
@@ -27,239 +26,262 @@ function getLocalIPs() {
       }
     }
   }
-  
   return ips;
 }
 
-// Configurações de caminhos
-const publicDir = path.join(__dirname, 'public');
-const uploadsDir = path.join(__dirname, 'public/src/uploads');
-
-// Verifica e cria diretórios se necessário
-if (!fs.existsSync(publicDir)) {
-  console.log(`Diretório público não encontrado, criando: ${publicDir}`);
-  fs.mkdirSync(publicDir, { recursive: true });
+// Verificar e criar diretórios
+function ensureDirectoriesExist() {
+  const dirsToCreate = [PUBLIC_DIR, UPLOADS_DIR];
+  
+  dirsToCreate.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      console.log(`[SISTEMA] Criando diretório: ${dir}`);
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
 }
 
-if (!fs.existsSync(uploadsDir)) {
-  console.log(`Diretório de uploads não encontrado, criando: ${uploadsDir}`);
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// ========== CONFIGURAÇÃO INICIAL ==========
+console.log(`
+=========================================
+  Iniciando Servidor de Documentos
+  Data: ${new Date().toLocaleString()}
+  Sistema: ${os.platform()} ${os.release()}
+  Node.js: ${process.version}
+  Diretório: ${BASE_DIR}
+=========================================
+`);
 
+ensureDirectoriesExist();
+
+// ========== MIDDLEWARES ==========
 app.use(cors());
-app.use(express.static(publicDir));
-app.use('/uploads', express.static(uploadsDir));
+app.use(express.static(PUBLIC_DIR));
+app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.json());
 
-// Log de middleware estático
-console.log('Middleware estático configurado para:');
-console.log('- Público:', publicDir);
-console.log('- Uploads:', uploadsDir);
+// Middleware de log de requisições
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
-// Configuração do multer com logs
+// ========== CONFIGURAÇÃO DO MULTER ==========
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      console.log(`Tentando salvar arquivo no diretório: ${uploadsDir}`);
-      cb(null, uploadsDir);
+      console.log(`[UPLOAD] Salvando arquivo em: ${UPLOADS_DIR}`);
+      cb(null, UPLOADS_DIR);
     },
     filename: (req, file, cb) => {
       const uniqueName = `${Date.now()}-${file.originalname}`;
-      console.log(`Nome único gerado para o arquivo: ${uniqueName}`);
+      console.log(`[UPLOAD] Nome do arquivo: ${uniqueName}`);
       cb(null, uniqueName);
     }
-  })
+  }),
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext !== '.pdf') {
+      console.log(`[UPLOAD] Tipo de arquivo rejeitado: ${file.originalname}`);
+      return cb(new Error('Apenas arquivos PDF são permitidos'), false);
+    }
+    cb(null, true);
+  }
 });
 
-// Upload e salvar metadados
+// ========== ROTAS ==========
+
+// Rota de upload
 app.post('/upload', upload.single('pdf'), (req, res) => {
-  console.log('Requisição de upload recebida');
-  console.log('Corpo da requisição:', req.body);
-  console.log('Arquivo recebido:', req.file);
-
-  const file = req.file;
-  const { name, category } = req.body;
-
-  if (!file || !name || !category) {
-    console.log('Upload falhou: campos obrigatórios faltando');
-    return res.status(400).send('Campos obrigatórios faltando.');
-  }
-
-  const fileUrl = `/uploads/${file.filename}`;
-  const now = new Date().toLocaleString('pt-BR', {
-    timeZone: 'America/Manaus',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-
-  const newDoc = { name, category, fileUrl, createdAt: now, updatedAt: now };
-
-  const dataPath = path.join(__dirname, 'data.json');
-  console.log(`Caminho do arquivo de dados: ${dataPath}`);
-
   try {
-    const existing = fs.existsSync(dataPath)
-      ? JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
-      : [];
+    const { name, category } = req.body;
+    const file = req.file;
 
-    existing.push(newDoc);
-    fs.writeFileSync(dataPath, JSON.stringify(existing, null, 2));
-    console.log(`Novo documento adicionado: ${name} (${category}) em ${fileUrl}`);
-    
-    // Verifica se o arquivo realmente foi salvo
-    const filePath = path.join(uploadsDir, file.filename);
-    if (fs.existsSync(filePath)) {
-      console.log(`Arquivo confirmado no sistema de arquivos: ${filePath}`);
-    } else {
-      console.error(`ERRO: Arquivo não encontrado após upload: ${filePath}`);
+    if (!file || !name || !category) {
+      console.log('[UPLOAD] Erro: Campos obrigatórios faltando');
+      return res.status(400).json({ error: 'Nome, categoria e arquivo são obrigatórios' });
     }
 
-    return res.json(newDoc);
+    const fileUrl = `/uploads/${file.filename}`;
+    const filePath = path.join(UPLOADS_DIR, file.filename);
+    
+    // Verifica se o arquivo foi realmente salvo
+    if (!fs.existsSync(filePath)) {
+      console.error('[UPLOAD] Erro: Arquivo não foi salvo no sistema');
+      return res.status(500).json({ error: 'Falha ao salvar arquivo' });
+    }
+
+    const now = new Date().toLocaleString('pt-BR', {
+      timeZone: 'America/Manaus',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    const newDoc = { 
+      name, 
+      category, 
+      fileUrl, 
+      createdAt: now, 
+      updatedAt: now
+    };
+
+    // Carrega ou cria o arquivo de dados
+    let documents = [];
+    if (fs.existsSync(DATA_FILE)) {
+      documents = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+    }
+
+    documents.push(newDoc);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(documents, null, 2));
+
+    console.log(`[UPLOAD] Sucesso: Documento "${name}" salvo em ${filePath}`);
+    res.json(newDoc);
   } catch (err) {
-    console.error('Erro ao processar upload:', err);
-    return res.status(500).send('Erro interno do servidor');
+    console.error('[UPLOAD] Erro interno:', err);
+    res.status(500).json({ error: 'Erro interno no servidor' });
   }
 });
 
-// Buscar documentos (corrigido o typo na rota)
+// Rota para listar documentos
 app.get('/documents', (req, res) => {
-  console.log('Requisição para listar documentos recebida');
-  const dataPath = path.join(__dirname, 'data.json');
-  
-  if (!fs.existsSync(dataPath)) {
-    console.log('Arquivo data.json não encontrado, retornando array vazio');
-    return res.json([]);
-  }
-
   try {
-    const fileContent = fs.readFileSync(dataPath, 'utf-8');
-    const documents = JSON.parse(fileContent);
-    console.log(`Listagem de documentos: ${documents.length} documentos encontrados`);
-    
-    // Verifica os caminhos dos arquivos
-    documents.forEach(doc => {
-      const filePath = path.join(__dirname, 'public/src', doc.fileUrl);
-      if (!fs.existsSync(filePath)) {
-        console.error(`Arquivo não encontrado: ${filePath} (documento: ${doc.name})`);
-      }
-    });
-    
+    if (!fs.existsSync(DATA_FILE)) {
+      console.log('[DOCS] Nenhum documento encontrado (arquivo de dados não existe)');
+      return res.json([]);
+    }
+
+    const documents = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+    console.log(`[DOCS] Retornando ${documents.length} documentos`);
     res.json(documents);
   } catch (err) {
-    console.error('Erro ao ler data.json:', err);
-    res.status(500).json({ error: 'Erro ao ler dados' });
+    console.error('[DOCS] Erro ao ler documentos:', err);
+    res.status(500).json({ error: 'Erro ao carregar documentos' });
   }
 });
 
-// Deletar documento
+// Rota para deletar documento (CORRIGIDA)
 app.delete('/documents', (req, res) => {
-  console.log('Requisição para deletar documento recebida');
-  console.log('Corpo da requisição:', req.body);
-
-  const { fileUrl } = req.body;
-
-  if (!fileUrl) {
-    console.log('Tentativa de exclusão sem fileUrl');
-    return res.status(400).json({ message: 'Arquivo não informado' });
-  }
-
-  const dataPath = path.join(__dirname, 'data.json');
   try {
-    const documents = fs.existsSync(dataPath)
-      ? JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
-      : [];
+    const { fileUrl } = req.body;
 
+    if (!fileUrl) {
+      console.log('[DELETE] Erro: fileUrl não fornecido');
+      return res.status(400).json({ error: 'fileUrl é obrigatório' });
+    }
+
+    if (!fs.existsSync(DATA_FILE)) {
+      console.log('[DELETE] Nenhum documento para deletar (arquivo de dados não existe)');
+      return res.json({ message: 'Nenhum documento encontrado' });
+    }
+
+    const documents = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
     const updatedDocs = documents.filter(doc => doc.fileUrl !== fileUrl);
     const removedDoc = documents.find(doc => doc.fileUrl === fileUrl);
 
     if (removedDoc) {
-      const filePath = path.join(__dirname, 'public/src', removedDoc.fileUrl);
-      console.log(`Tentando remover arquivo: ${filePath}`);
+      // CORREÇÃO: O caminho do arquivo deve ser construído corretamente
+      const filePath = path.join(UPLOADS_DIR, path.basename(removedDoc.fileUrl));
       
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
-        console.log(`Documento excluído: ${removedDoc.name}`);
+        console.log(`[DELETE] Arquivo removido: ${filePath}`);
       } else {
-        console.error(`Arquivo não encontrado para exclusão: ${filePath}`);
+        console.log(`[DELETE] Aviso: Arquivo não encontrado: ${filePath}`);
       }
+
+      fs.writeFileSync(DATA_FILE, JSON.stringify(updatedDocs, null, 2));
+      console.log(`[DELETE] Documento removido: ${fileUrl}`);
+      return res.json({ message: 'Documento removido com sucesso' });
     }
 
-    fs.writeFileSync(dataPath, JSON.stringify(updatedDocs, null, 2));
-    res.json({ message: 'Documento removido com sucesso' });
+    console.log(`[DELETE] Documento não encontrado: ${fileUrl}`);
+    res.status(404).json({ error: 'Documento não encontrado' });
   } catch (err) {
-    console.error('Erro ao deletar documento:', err);
-    res.status(500).json({ error: 'Erro ao deletar documento' });
+    console.error('[DELETE] Erro ao remover documento:', err);
+    res.status(500).json({ error: 'Erro ao remover documento' });
   }
 });
 
-// Atualizar nome do documento
+// Rota para atualizar documento
 app.put('/documents', (req, res) => {
-  console.log('Requisição para atualizar documento recebida');
-  console.log('Corpo da requisição:', req.body);
-
-  const { fileUrl, newName } = req.body;
-
-  if (!fileUrl || !newName) {
-    console.log('Tentativa de atualização sem parâmetros necessários');
-    return res.status(400).json({ message: 'Parâmetros faltando' });
-  }
-
-  const dataPath = path.join(__dirname, 'data.json');
   try {
-    const documents = fs.existsSync(dataPath)
-      ? JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
-      : [];
+    const { fileUrl, newName } = req.body;
 
+    if (!fileUrl || !newName) {
+      console.log('[UPDATE] Erro: fileUrl ou newName não fornecidos');
+      return res.status(400).json({ error: 'fileUrl e newName são obrigatórios' });
+    }
+
+    if (!fs.existsSync(DATA_FILE)) {
+      console.log('[UPDATE] Nenhum documento para atualizar (arquivo de dados não existe)');
+      return res.status(404).json({ error: 'Nenhum documento encontrado' });
+    }
+
+    const documents = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
     const docIndex = documents.findIndex(doc => doc.fileUrl === fileUrl);
+
     if (docIndex === -1) {
-      console.log(`Documento não encontrado para atualização: ${fileUrl}`);
-      return res.status(404).json({ message: 'Documento não encontrado' });
+      console.log(`[UPDATE] Documento não encontrado: ${fileUrl}`);
+      return res.status(404).json({ error: 'Documento não encontrado' });
     }
 
     const oldName = documents[docIndex].name;
     documents[docIndex].name = newName;
     documents[docIndex].updatedAt = new Date().toISOString();
-    fs.writeFileSync(dataPath, JSON.stringify(documents, null, 2));
 
-    console.log(`Documento atualizado: "${oldName}" para "${newName}"`);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(documents, null, 2));
+    console.log(`[UPDATE] Documento atualizado: "${oldName}" -> "${newName}"`);
     res.json(documents[docIndex]);
   } catch (err) {
-    console.error('Erro ao atualizar documento:', err);
+    console.error('[UPDATE] Erro ao atualizar documento:', err);
     res.status(500).json({ error: 'Erro ao atualizar documento' });
   }
 });
 
-// Iniciar servidor
-const ips = getLocalIPs();
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n=== Servidor Iniciado ===`);
-  console.log(`Porta: ${PORT}`);
-  console.log(`Acesso local: http://localhost:${PORT}`);
-  
-  if (ips.length > 0) {
-    console.log('\nAcesso pela rede local:');
-    ips.forEach(ip => {
-      console.log(`- http://${ip}:${PORT}`);
-    });
-  } else {
-    console.log('\nNenhum endereço de rede local encontrado');
-  }
-
-  console.log('\nDiretórios importantes:');
-  console.log('- Público:', publicDir);
-  console.log('- Uploads:', uploadsDir);
-  console.log('========================\n');
+// Rota de informações do servidor
+app.get('/server-info', (req, res) => {
+  const info = {
+    system: {
+      platform: os.platform(),
+      release: os.release(),
+      nodeVersion: process.version
+    },
+    paths: {
+      baseDir: BASE_DIR,
+      publicDir: PUBLIC_DIR,
+      uploadsDir: UPLOADS_DIR,
+      dataFile: DATA_FILE
+    },
+    stats: {
+      uploadsCount: fs.existsSync(UPLOADS_DIR) ? fs.readdirSync(UPLOADS_DIR).length : 0,
+      documentsCount: fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8')).length : 0
+    }
+  };
+  res.json(info);
 });
 
-// Tratamento de erros
+// ========== INICIAR SERVIDOR ==========
+const server = app.listen(PORT, '0.0.0.0', () => {
+  const ips = getLocalIPs();
+  console.log(`
+=========================================
+  Servidor rodando na porta ${PORT}
+  Acesso local: http://localhost:${PORT}
+  Acesso rede: ${ips.map(ip => `http://${ip}:${PORT}`).join('\n              ')}
+=========================================
+  `);
+});
+
+// ========== TRATAMENTO DE ERROS ==========
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[ERRO] Rejeição não tratada em:', promise, 'Motivo:', reason);
+});
+
 process.on('uncaughtException', (err) => {
-  console.error('\n=== ERRO NÃO TRATADO ===');
-  console.error('Mensagem:', err.message);
-  console.error('Stack:', err.stack);
-  console.error('=======================');
+  console.error('[ERRO] Exceção não tratada:', err);
   process.exit(1);
 });
