@@ -6,7 +6,7 @@ let isAdmin = false;
 
 function loginAsAdmin() {
   const password = document.getElementById('adminPassword').value;
-  if (password === 'antonelly123') {
+  if (password === 'admin') {
     isAdmin = true;
     alert('Modo administrador ativado.');
     showAdminControls();

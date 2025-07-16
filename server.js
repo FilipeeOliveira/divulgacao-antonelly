@@ -3,9 +3,26 @@ const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
+const os = require('os');
 
 const app = express();
 const PORT = 5200;
+
+// Função para obter IPs locais
+function getLocalIPs() {
+  const interfaces = os.networkInterfaces();
+  const ips = [];
+  
+  for (const interfaceName in interfaces) {
+    for (const iface of interfaces[interfaceName]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        ips.push(iface.address);
+      }
+    }
+  }
+  
+  return ips;
+}
 
 app.use(cors());
 app.use(express.static('public'));
@@ -31,6 +48,7 @@ app.post('/upload', upload.single('pdf'), (req, res) => {
   const { name, category } = req.body;
 
   if (!file || !name || !category) {
+    console.log('Upload falhou: campos obrigatórios faltando');
     return res.status(400).send('Campos obrigatórios faltando.');
   }
 
@@ -43,8 +61,8 @@ app.post('/upload', upload.single('pdf'), (req, res) => {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-
   });
+
   const newDoc = { name, category, fileUrl, createdAt: now, updatedAt: now };
 
   const dataPath = path.join(__dirname, 'data.json');
@@ -55,25 +73,28 @@ app.post('/upload', upload.single('pdf'), (req, res) => {
   existing.push(newDoc);
   fs.writeFileSync(dataPath, JSON.stringify(existing, null, 2));
 
+  console.log(`Novo documento adicionado: ${name} (${category})`);
   return res.json(newDoc);
 });
 
 // Buscar documentos
 app.get('/documents', (req, res) => {
   const dataPath = path.join(__dirname, 'data.json');
-  if (!fs.existsSync(dataPath)) return res.json([]);
+  if (!fs.existsSync(dataPath)) {
+    console.log('Listagem de documentos: nenhum documento encontrado');
+    return res.json([]);
+  }
   const documents = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+  console.log(`Listagem de documentos: ${documents.length} documentos encontrados`);
   res.json(documents);
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
-
+// Deletar documento
 app.delete('/documents', (req, res) => {
   const { fileUrl } = req.body;
 
   if (!fileUrl) {
+    console.log('Tentativa de exclusão sem fileUrl');
     return res.status(400).json({ message: 'Arquivo não informado' });
   }
 
@@ -85,11 +106,11 @@ app.delete('/documents', (req, res) => {
   const updatedDocs = documents.filter(doc => doc.fileUrl !== fileUrl);
   const removedDoc = documents.find(doc => doc.fileUrl === fileUrl);
 
-  // Remove o arquivo do disco
   if (removedDoc) {
     const filePath = path.join(__dirname, 'public/src', removedDoc.fileUrl);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
+      console.log(`Documento excluído: ${removedDoc.name}`);
     }
   }
 
@@ -103,6 +124,7 @@ app.put('/documents', (req, res) => {
   const { fileUrl, newName } = req.body;
 
   if (!fileUrl || !newName) {
+    console.log('Tentativa de atualização sem parâmetros necessários');
     return res.status(400).json({ message: 'Parâmetros faltando' });
   }
 
@@ -113,12 +135,41 @@ app.put('/documents', (req, res) => {
 
   const docIndex = documents.findIndex(doc => doc.fileUrl === fileUrl);
   if (docIndex === -1) {
+    console.log(`Documento não encontrado para atualização: ${fileUrl}`);
     return res.status(404).json({ message: 'Documento não encontrado' });
   }
 
+  const oldName = documents[docIndex].name;
   documents[docIndex].name = newName;
   documents[docIndex].updatedAt = new Date().toISOString();
   fs.writeFileSync(dataPath, JSON.stringify(documents, null, 2));
 
+  console.log(`Documento atualizado: "${oldName}" para "${newName}"`);
   res.json(documents[docIndex]);
+});
+
+// Iniciar servidor
+const ips = getLocalIPs();
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor iniciado na porta ${PORT}`);
+  console.log(`Acesso local: http://localhost:${PORT}`);
+  
+  if (ips.length > 0) {
+    console.log('Acesso pela rede local:');
+    ips.forEach(ip => {
+      console.log(`- http://${ip}:${PORT}`);
+    });
+  } else {
+    console.log('Nenhum endereço de rede local encontrado');
+  }
+});
+
+// Tratamento de erro para porta em uso
+process.on('uncaughtException', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Erro: A porta ${PORT} já está em uso`);
+  } else {
+    console.error('Erro não tratado:', err);
+  }
+  process.exit(1);
 });
