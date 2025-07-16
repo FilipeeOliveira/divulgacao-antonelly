@@ -97,17 +97,23 @@ app.post('/upload', upload.single('pdf'), (req, res) => {
     const { name, category } = req.body;
     const file = req.file;
 
-    if (!file || !name || !category) {
-      console.log('[UPLOAD] Erro: Campos obrigatórios faltando');
-      return res.status(400).json({ error: 'Nome, categoria e arquivo são obrigatórios' });
+    console.log('[UPLOAD] Requisição recebida:', { name, category });
+    if (!file) {
+      console.error('[UPLOAD] Nenhum arquivo foi enviado');
+      return res.status(400).json({ error: 'Arquivo é obrigatório' });
     }
 
-    const fileUrl = `/uploads/${file.filename}`;
+    console.log('[UPLOAD] Arquivo recebido:', file);
+
     const filePath = path.join(UPLOADS_DIR, file.filename);
-    
-    // Verifica se o arquivo foi realmente salvo
+    const fileUrl = `/uploads/${file.filename}`;
+
+    console.log('[UPLOAD] Caminho completo do arquivo:', filePath);
+    console.log('[UPLOAD] URL pública do arquivo:', fileUrl);
+    console.log('[UPLOAD] Verificando se arquivo existe no disco:', fs.existsSync(filePath));
+
     if (!fs.existsSync(filePath)) {
-      console.error('[UPLOAD] Erro: Arquivo não foi salvo no sistema');
+      console.error('[UPLOAD] Erro: Arquivo não foi salvo no caminho esperado');
       return res.status(500).json({ error: 'Falha ao salvar arquivo' });
     }
 
@@ -149,13 +155,22 @@ app.post('/upload', upload.single('pdf'), (req, res) => {
 // Rota para listar documentos
 app.get('/documents', (req, res) => {
   try {
+    console.log('[DOCS] Tentando ler o arquivo de dados:', DATA_FILE);
+    
     if (!fs.existsSync(DATA_FILE)) {
-      console.log('[DOCS] Nenhum documento encontrado (arquivo de dados não existe)');
+      console.warn('[DOCS] Arquivo de dados não encontrado:', DATA_FILE);
       return res.json([]);
     }
 
-    const documents = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-    console.log(`[DOCS] Retornando ${documents.length} documentos`);
+    const rawData = fs.readFileSync(DATA_FILE, 'utf-8');
+    const documents = JSON.parse(rawData);
+
+    console.log(`[DOCS] Encontrado ${documents.length} documentos`);
+    documents.forEach((doc, i) => {
+      const fullPath = path.join(UPLOADS_DIR, path.basename(doc.fileUrl));
+      console.log(`[DOC ${i + 1}] Nome: ${doc.name}, Caminho: ${fullPath}, Existe? ${fs.existsSync(fullPath)}`);
+    });
+
     res.json(documents);
   } catch (err) {
     console.error('[DOCS] Erro ao ler documentos:', err);
